@@ -21,6 +21,30 @@
 			reg = <0>;
 			clock-frequency = <24000000>;
 			compatible ="telink,b91", "riscv";
+			cpu-power-states = <&state0>;
+		};
+	};
+
+	power-states {
+		state0: state0 {
+			compatible = "zephyr,power-state";
+			power-state-name = "suspend-to-idle";
+			min-residency-us = <50000>;
+			exit-latency-us = <1000>;
+		};
+
+		state1: state1 {
+			compatible = "zephyr,power-state";
+			power-state-name = "suspend-to-ram";
+			min-residency-us = <100000>;
+			exit-latency-us = <7000>;
+		};
+
+		state2: state2 {
+			compatible = "zephyr,power-state";
+			power-state-name = "soft-off";
+			min-residency-us = <3000000>;
+			exit-latency-us = <7000>;
 		};
 	};
 

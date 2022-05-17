@@ -5,6 +5,16 @@ zephyr_sources(
 	start.S
 	soc_irq.S
 	soc.c
+	soc_hw.c
+)
+
+zephyr_sources_ifdef(CONFIG_PM
+	power.c
+	tl_sleep.c
+)
+
+zephyr_sources_ifdef(CONFIG_TELINK_B91_RETENTION
+	tl_sleep_context.S
 )
 
 # Force using BFD-LD

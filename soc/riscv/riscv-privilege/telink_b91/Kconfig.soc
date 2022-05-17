@@ -21,6 +21,11 @@ config TELINK_B91_PFT_ARCH
 	select RISCV_SOC_CONTEXT_SAVE
 	depends on SOC_SERIES_RISCV_TELINK_B91
 
+config TELINK_B91_RETENTION
+	bool "Support deep-sleep retention"
+	default n
+	depends on SOC_SERIES_RISCV_TELINK_B91
+
 choice
 prompt "Telink B91 SoC implementation"
 depends on SOC_SERIES_RISCV_TELINK_B91
