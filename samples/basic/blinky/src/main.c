@@ -5,38 +5,27 @@
  */
 
 #include <zephyr/zephyr.h>
-#include <zephyr/drivers/gpio.h>
 
-/* 1000 msec = 1 sec */
-#define SLEEP_TIME_MS   1000
+/* CPU based sleep - sleep modes are inactive but delay */
+static void sleep_cpu_load_ms(uint32_t ms)
+{
+	volatile uint64_t counter = (uint64_t)ms * 3432;
 
-/* The devicetree node identifier for the "led0" alias. */
-#define LED0_NODE DT_ALIAS(led0)
-
-/*
- * A build error on this line means your board is unsupported.
- * See the sample documentation for information on how to fix this.
- */
-static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
+	while (counter) {
+		counter--;
+	}
+}
 
 void main(void)
 {
-	int ret;
+	printk("main started\n");
+	sleep_cpu_load_ms(5000);
+	printk("guard expiration\n");
 
-	if (!device_is_ready(led.port)) {
-		return;
-	}
-
-	ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
-	if (ret < 0) {
-		return;
-	}
+	uint32_t counter = 0;
 
 	while (1) {
-		ret = gpio_pin_toggle_dt(&led);
-		if (ret < 0) {
-			return;
-		}
-		k_msleep(SLEEP_TIME_MS);
+		printk("run %u\n", counter++);
+		k_msleep(1000);
 	}
 }
