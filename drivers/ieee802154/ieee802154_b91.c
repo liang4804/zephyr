@@ -835,8 +835,13 @@ static int b91_init(const struct device *dev)
 	k_sem_init(&b91->ack_wait, 0, 1);
 
 	/* init IRQs */
+#if CONFIG_DYNAMIC_INTERRUPTS
+	irq_connect_dynamic(DT_INST_IRQN(0), DT_INST_IRQ(0, priority), b91_rf_isr,
+		DEVICE_DT_INST_GET(0), 0);
+#else
 	IRQ_CONNECT(DT_INST_IRQN(0), DT_INST_IRQ(0, priority), b91_rf_isr,
 		DEVICE_DT_INST_GET(0), 0);
+#endif
 	riscv_plic_set_priority(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET,
 		DT_INST_IRQ(0, priority));
 
