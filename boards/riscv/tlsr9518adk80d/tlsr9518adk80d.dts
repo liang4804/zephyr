@@ -21,10 +21,7 @@
 		led3 = &led_red;
 		sw0 = &key_1;
 		sw2 = &key_3;
-		pwm-led0 = &pwm_led0;
-		pwm-led1 = &pwm_led1;
-		pwm-led2 = &pwm_led2;
-		pwm-led3 = &pwm_led3;
+		pwm-led0 = &pwm_led_blue;
 		pwm-0 = &pwm0;
 	};
 
@@ -55,21 +52,9 @@
 	pwm_leds {
 		compatible = "pwm-leds";
 
-		pwm_led0: pwm_led_0 {
+		pwm_led_blue: pwm_led_0 {
 			pwms = <&pwm0 0 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
 			label = "PWM LED Blue";
-		};
-		pwm_led1: pwm_led_1 {
-			pwms = <&pwm0 3 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
-			label = "PWM LED Green";
-		};
-		pwm_led2: pwm_led_2 {
-			pwms = <&pwm0 2 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
-			label = "PWM LED Red";
-		};
-		pwm_led3: pwm_led_3 {
-			pwms = <&pwm0 1 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
-			label = "PWM IDENTIFY LED Green";
 		};
 	};
 
@@ -110,7 +95,7 @@
 };
 
 &flash {
-	reg = <0x20000000 0x200000>;
+	reg = <0x20000000 0x100000>;
 
 	partitions {
 		compatible = "fixed-partitions";
@@ -119,25 +104,25 @@
 
 		boot_partition: partition@0 {
 			label = "mcuboot";
-			reg = <0x00000000 0x13000>;
+			reg = <0x00000000 0x18000>;
 		};
-		slot0_partition: partition@13000 {
+		slot0_partition: partition@18000 {
 			label = "image-0";
-			reg = <0x13000 0xf1000>;
+			reg = <0x18000 0x6C000>;
 		};
-		factory_partition: partition@104000 {
-			label = "factory-data";
-			reg = <0x104000 0x1000>;
-		};
-		storage_partition: partition@105000 {
-			label = "storage";
-			reg = <0x105000 0x8000>;
-		};
-		slot1_partition: partition@10d000 {
+		slot1_partition: partition@84000 {
 			label = "image-1";
-			reg = <0x10d000 0xf1000>;
+			reg = <0x84000 0x6C000>;
 		};
-		/* region <0x1fe000 0x2000> is reserved for Telink B91 SDK's data */
+		scratch_partition: partition@f0000 {
+			label = "image-scratch";
+			reg = <0xf0000 0x4000>;
+		};
+		storage_partition: partition@f4000 {
+			label = "storage";
+			reg = <0xf4000 0x0000b000>;
+		/* region <0xff000 0x1000> is reserved for Telink B91 SDK's data */
+		};
 	};
 };
 
@@ -168,7 +153,7 @@
 &pwm0 {
 	status = "okay";
 	clock-frequency = <93750>;
-	pinctrl-0 = <&pwm_ch0_pb4_default &pwm_ch1_pb5_default &pwm_ch2_pe2_default &pwm_ch3_pe0_default>;
+	pinctrl-0 = <&pwm_ch0_pb4_default>;
 	pinctrl-names = "default";
 };
 
