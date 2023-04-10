@@ -588,6 +588,7 @@ ALWAYS_INLINE b91_send_ack(const struct device *dev, struct ieee802154_frame *fr
 	if (b91_ieee802154_frame_build(frame, ack_buf, sizeof(ack_buf), &ack_len)) {
 		b91->ack_sending = true;
 		k_sem_reset(&b91->tx_wait);
+
 		rf_set_txmode();
 #ifdef CONFIG_IEEE802154_2015
 		if (frame->sec_header) {
@@ -629,7 +630,7 @@ static void ALWAYS_INLINE b91_rf_rx_isr(const struct device *dev)
 
 	rx_time -= delta_time;
 #endif /* CONFIG_NET_PKT_TIMESTAMP && CONFIG_NET_PKT_TXTIME */
-
+    
 	dma_chn_dis(DMA1);
 	rf_clr_irq_status(FLD_RF_IRQ_RX);
 
@@ -679,6 +680,11 @@ static void ALWAYS_INLINE b91_rf_rx_isr(const struct device *dev)
 			break;
 		}
 		if (frame.general.type == IEEE802154_FRAME_FCF_TYPE_ACK) {
+			if (IS_ENABLED(CONFIG_OPENTHREAD_MTD_SED)) 
+			{
+					if(frame.general.fp_bit==0)
+					rf_set_tx_rx_off();
+			}
 			if (b91->ack_handler_en) {
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 				b91_handle_ack(dev, payload, length, rx_time);
@@ -844,8 +850,10 @@ int b91_init(const struct device *dev)
 	rf_set_zigbee_250K_mode();
 	rf_set_tx_dma(1, B91_TRX_LENGTH);
 	rf_set_rx_dma(b91->rx_buffer, 0, B91_TRX_LENGTH);
-	rf_set_txmode();
-	rf_set_rxmode();
+	rf_set_tx_rx_off();
+	// rf_set_trx_state(RF_MODE_OFF,B91_LOGIC_CHANNEL_TO_PHYSICAL(b91->current_channel));
+	// rf_set_txmode();
+	// rf_set_rxmode();
 
 	/* init IRQs */
 #if CONFIG_DYNAMIC_INTERRUPTS
@@ -963,8 +971,8 @@ static int b91_set_channel(const struct device *dev, uint16_t channel)
 	if (b91->current_channel != channel) {
 		b91->current_channel = channel;
 		rf_set_chn(B91_LOGIC_CHANNEL_TO_PHYSICAL(channel));
-		rf_set_txmode();
-		rf_set_rxmode();
+		// rf_set_txmode();
+		// rf_set_rxmode();
 	}
 
 	return 0;
@@ -1034,9 +1042,9 @@ static int b91_start(const struct device *dev)
 	b91_disable_pm(dev);
 	/* check if RF is already started */
 	if (!b91->is_started) {
-		rf_set_txmode();
-		rf_set_rxmode();
-		delay_us(CONFIG_IEEE802154_B91_SET_TXRX_DELAY_US);
+		// rf_set_txmode();
+		// rf_set_rxmode();
+		// delay_us(CONFIG_IEEE802154_B91_SET_TXRX_DELAY_US);
 		riscv_plic_irq_enable(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
 		b91->is_started = true;
 	}
@@ -1063,7 +1071,7 @@ static int b91_stop(const struct device *dev)
 		}
 		riscv_plic_irq_disable(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
 		rf_set_tx_rx_off();
-		delay_us(CONFIG_IEEE802154_B91_SET_TXRX_DELAY_US);
+		// delay_us(CONFIG_IEEE802154_B91_SET_TXRX_DELAY_US);
 		b91->is_started = false;
 		if (b91->event_handler) {
 			b91->event_handler(dev, IEEE802154_EVENT_SLEEP, NULL);
@@ -1457,12 +1465,13 @@ static int ieee802154_b91_pm_action(const struct device *dev, enum pm_device_act
 		switch (action) {
 		case PM_DEVICE_ACTION_RESUME:
 			/* restart radio */
-			rf_mode_init();
+			// rf_mode_init();
 			rf_set_zigbee_250K_mode();
-			rf_set_chn(B91_LOGIC_CHANNEL_TO_PHYSICAL(b91->current_channel));
+			// rf_set_chn(B91_LOGIC_CHANNEL_TO_PHYSICAL(b91->current_channel));
 			rf_set_power_level(b91_tx_pwr_lt[b91->current_dbm - B91_TX_POWER_MIN]);
-			rf_set_txmode();
-			rf_set_rxmode();
+			rf_set_trx_state(RF_MODE_OFF,B91_LOGIC_CHANNEL_TO_PHYSICAL(b91->current_channel));
+			// rf_set_txmode();
+			// rf_set_rxmode();
 			break;
 
 		case PM_DEVICE_ACTION_SUSPEND:

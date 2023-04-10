@@ -134,8 +134,8 @@ manifest:
       groups:
         - hal
     - name: hal_telink
-      url: https://github.com/telink-semi/hal_telink
-      revision: de7557c7981a7e8c1a1ef60504c4557bed7608da
+      url: https://github.com/liang4804/zephyr
+      revision: 8a333d83b4c972a29284dfb0b1f275d809b405be
       path: modules/hal/telink
       groups:
         - hal

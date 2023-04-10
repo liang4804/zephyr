@@ -141,9 +141,9 @@ void sys_clock_set_timeout(int32_t ticks, bool idle)
 	 * the interrupt will never fire!  Just rely on the fact that
 	 * the OS gave us the proper timeout already.
 	 */
-	if (idle) {
-		return;
-	}
+	// if (idle) {
+	// 	return;
+	// }
 
 	ticks = ticks == K_TICKS_FOREVER ? MAX_TICKS : ticks;
 	ticks = CLAMP(ticks - 1, 0, (int32_t)MAX_TICKS);
