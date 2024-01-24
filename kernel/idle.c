@@ -14,8 +14,9 @@
 #include <zephyr/logging/log.h>
 #include <ksched.h>
 #include <kswap.h>
-
-LOG_MODULE_DECLARE(os, CONFIG_KERNEL_LOG_LEVEL);
+#include "gpio.h"
+#include "gpio_reg.h"
+LOG_MODULE_DECLARE(os, 2);//CONFIG_KERNEL_LOG_LEVEL
 
 void z_pm_save_idle_exit(void)
 {
@@ -32,6 +33,9 @@ void z_pm_save_idle_exit(void)
 #endif
 }
 
+// extern  int *Debug_Ptr[32];
+// extern   int Debug_Widx,Debug_Ridx,Debug_Idx;
+
 void idle(void *unused1, void *unused2, void *unused3)
 {
 	ARG_UNUSED(unused1);
@@ -39,6 +43,9 @@ void idle(void *unused1, void *unused2, void *unused3)
 	ARG_UNUSED(unused3);
 
 	__ASSERT_NO_MSG(_current->base.prio >= 0);
+
+
+
 
 	while (true) {
 		/* SMP systems without a working IPI can't actual
@@ -64,7 +71,11 @@ void idle(void *unused1, void *unused2, void *unused3)
 		(void) arch_irq_lock();
 
 #ifdef CONFIG_PM
+		// gpio_toggle(GPIO_PB7);
+		// gpio_toggle(GPIO_PB6);
 		_kernel.idle = z_get_next_timeout_expiry();
+		// gpio_toggle(GPIO_PB6);
+		// gpio_toggle(GPIO_PB7);
 
 		/*
 		 * Call the suspend hook function of the soc interface
@@ -81,9 +92,22 @@ void idle(void *unused1, void *unused2, void *unused3)
 		 * which is essential for the kernel's scheduling
 		 * logic.
 		 */
+		//  LOG_WRN("idle %x %x %x",Debug_Widx,Debug_Ridx,Debug_Idx);
+		//  Debug_Ridx = Debug_Widx;
+		// while(Debug_Widx!=Debug_Ridx)
+		// {
+		// LOG_WRN("thread %x",Debug_Ptr[Debug_Ridx%32]);
+		//  Debug_Ridx++;
+		// }
+		// gpio_toggle(GPIO_PB7);
+		// gpio_toggle(GPIO_PB5);
 		if (k_is_pre_kernel() || !pm_system_suspend(_kernel.idle)) {
+			// gpio_toggle(GPIO_PB5);
+			// gpio_toggle(GPIO_PB7);
 			k_cpu_idle();
 		}
+		// gpio_toggle(GPIO_PB5);
+		// gpio_toggle(GPIO_PB7);
 #else
 		k_cpu_idle();
 #endif

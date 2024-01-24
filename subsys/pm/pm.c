@@ -18,7 +18,8 @@
 #include <zephyr/tracing/tracing.h>
 
 #include "pm_stats.h"
-
+#include "gpio.h"
+#include "gpio_reg.h"
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(pm, CONFIG_PM_LOG_LEVEL);
 
@@ -56,7 +57,8 @@ TYPE_SECTION_START_EXTERN(const struct device *, pm_device_slots);
 #if !defined(CONFIG_PM_DEVICE_RUNTIME_EXCLUSIVE)
 /* Number of devices successfully suspended. */
 static size_t num_susp;
-
+// extern  int *Debug_Ptr[32];
+// extern   int Debug_Widx,Debug_Ridx,Debug_Idx;
 static int pm_suspend_devices(void)
 {
 	const struct device *devs;
@@ -271,6 +273,7 @@ bool pm_system_suspend(int32_t ticks)
 	pm_state_notify(true);
 	atomic_set_bit(z_post_ops_required, id);
 	state_set(&z_cpus_pm_state[id]);
+
 	pm_stats_stop();
 
 	/* Wake up sequence starts here */
@@ -279,9 +282,32 @@ bool pm_system_suspend(int32_t ticks)
 		pm_resume_devices();
 	}
 #endif
+
 	pm_stats_update(z_cpus_pm_state[id].state);
+
+	// gpio_toggle(GPIO_PB5);
+	// gpio_toggle(GPIO_PB7);
+	//delay_us(100);
+	// gpio_toggle(GPIO_PB5);
+	// gpio_toggle(GPIO_PB7);
+
 	pm_system_resume();
+
+	// gpio_toggle(GPIO_PB5);
+	// gpio_toggle(GPIO_PB7);
+	//delay_us(150);
+	// gpio_toggle(GPIO_PB5);
+	// gpio_toggle(GPIO_PB7);
+
 	k_sched_unlock();
+
+	// gpio_toggle(GPIO_PB5);
+	// gpio_toggle(GPIO_PB7);
+	//delay_us(350);
+	// gpio_toggle(GPIO_PB5);
+	// gpio_toggle(GPIO_PB7);
+
+
 	SYS_PORT_TRACING_FUNC_EXIT(pm, system_suspend, ticks,
 				   z_cpus_pm_state[id].state);
 

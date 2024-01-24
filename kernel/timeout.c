@@ -80,13 +80,20 @@ static int32_t next_timeout(void)
 	return ret;
 }
 
+// extern  int *Debug_Ptr[32];
+// extern   int Debug_Widx,Debug_Ridx,Debug_Idx;
+
+
 void z_add_timeout(struct _timeout *to, _timeout_func_t fn,
 		   k_timeout_t timeout)
 {
 	if (K_TIMEOUT_EQ(timeout, K_FOREVER)) {
 		return;
 	}
-
+	// Debug_Ptr[Debug_Widx%32]=timeout.ticks;
+	// Debug_Widx++;
+	// Debug_Ptr[Debug_Widx%32]=fn;
+	// Debug_Widx++;
 #ifdef CONFIG_KERNEL_COHERENCE
 	__ASSERT_NO_MSG(arch_mem_coherent(to));
 #endif

@@ -20,7 +20,7 @@
 #include <zephyr/timing/timing.h>
 #include <zephyr/sys/util.h>
 
-LOG_MODULE_DECLARE(os, CONFIG_KERNEL_LOG_LEVEL);
+LOG_MODULE_DECLARE(os, 2);//CONFIG_KERNEL_LOG_LEVEL
 
 #if defined(CONFIG_SCHED_DUMB)
 #define _priq_run_add		z_priq_dumb_add
@@ -1036,13 +1036,21 @@ struct k_thread *z_swap_next_thread(void)
 	return _kernel.ready_q.cache;
 #endif
 }
-
+// volatile int *Debug_Ptr[32] = {0};
+// volatile int Debug_Widx=0,Debug_Ridx=0,Debug_Idx=0;
 #ifdef CONFIG_USE_SWITCH
 /* Just a wrapper around _current = xxx with tracing */
 static inline void set_current(struct k_thread *new_thread)
 {
+
 	z_thread_mark_switched_out();
 	_current_cpu->current = new_thread;
+	// 	if((Debug_Widx-Debug_Ridx)<32)
+	// {
+	// 	Debug_Ptr[Debug_Widx%32]=_current_cpu->current;
+	// 	Debug_Widx++;
+	// }
+	// Debug_Idx++;
 }
 
 /**

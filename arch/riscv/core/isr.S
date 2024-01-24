@@ -146,6 +146,7 @@ SECTION_FUNC(exception.entry, _isr_wrapper)
 #ifdef CONFIG_RISCV_SOC_HAS_ISR_STACKING
 	SOC_ISR_SW_STACKING
 #else
+	/* 1111111111111 */
 	/* Save caller-saved registers on current thread stack. */
 	addi sp, sp, -__z_arch_esf_t_SIZEOF
 	DO_CALLER_SAVED(sr)		;
@@ -252,6 +253,7 @@ no_fp:	/* increment _current->arch.exception_depth */
 #endif /* CONFIG_FPU_SHARING */
 
 #ifdef CONFIG_RISCV_SOC_CONTEXT_SAVE
+	/* 1111111111111 */
 	/* Handle context saving at SOC level. */
 	addi a0, sp, __z_arch_esf_t_soc_context_OFFSET
 	jal ra, __soc_save_context
@@ -485,7 +487,7 @@ is_interrupt:
 	csrs mstatus, t1
 2:
 #endif
-
+	/* 11111111111111111111111111 */
 	/* Increment _current_cpu->nested */
 	lw t1, ___cpu_t_nested_OFFSET(s0)
 	addi t2, t1, 1
@@ -508,7 +510,7 @@ on_irq_stack:
 #ifdef CONFIG_TRACING_ISR
 	call sys_trace_isr_enter
 #endif
-
+	/* 111111111111 */
 	/* Get IRQ causing interrupt */
 	csrr a0, mcause
 	li t0, SOC_MCAUSE_EXP_MASK
@@ -542,6 +544,7 @@ on_irq_stack:
 #endif
 
 irq_done:
+	/* 111111111111 */
 	/* Decrement _current_cpu->nested */
 	lw t2, ___cpu_t_nested_OFFSET(s0)
 	addi t2, t2, -1
@@ -552,6 +555,7 @@ irq_done:
 	lr sp, 0(sp)
 
 #ifdef CONFIG_STACK_SENTINEL
+	/* 111111111111 */
 	call z_check_stack_sentinel
 #endif
 
@@ -590,6 +594,7 @@ might_have_rescheduled:
 no_reschedule:
 
 #ifdef CONFIG_RISCV_SOC_CONTEXT_SAVE
+	/* 111111111111 */
 	/* Restore context at SOC level */
 	addi a0, sp, __z_arch_esf_t_soc_context_OFFSET
 	jal ra, __soc_restore_context
@@ -607,7 +612,7 @@ no_reschedule:
 	sb t1, _thread_offset_to_exception_depth(t0)
 fp_trap_exit:
 #endif
-
+	/* 111111111111 */
 	/* Restore MEPC and MSTATUS registers */
 	lr t0, __z_arch_esf_t_mepc_OFFSET(sp)
 	lr t2, __z_arch_esf_t_mstatus_OFFSET(sp)
@@ -650,13 +655,14 @@ fp_trap_exit:
 	sr t0, __z_arch_esf_t_sp_OFFSET(sp)
 2:
 #endif
-
+	/* 111111111111 */
 	/* Restore s0 (it is no longer ours) */
 	lr s0, __z_arch_esf_t_s0_OFFSET(sp)
 
 #ifdef CONFIG_RISCV_SOC_HAS_ISR_STACKING
 	SOC_ISR_SW_UNSTACKING
 #else
+	/* 111111111111 */
 	/* Restore caller-saved registers from thread stack */
 	DO_CALLER_SAVED(lr)
 
@@ -664,6 +670,7 @@ fp_trap_exit:
 	/* retrieve saved stack pointer */
 	lr sp, __z_arch_esf_t_sp_OFFSET(sp)
 #else
+	/* 111111111111 */
 	/* remove esf from the stack */
 	addi sp, sp, __z_arch_esf_t_SIZEOF
 #endif

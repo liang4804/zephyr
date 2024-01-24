@@ -240,6 +240,31 @@ void soc_b9x_restore(void)
 		CCLK_96M_HCLK_48M_PCLK_24M;
 		break;
 	}
+
+	// gpio_function_en(GPIO_PB4);
+	// gpio_output_en(GPIO_PB4);
+	// gpio_function_en(GPIO_PB5);
+	// gpio_output_en(GPIO_PB5);
+	// gpio_function_en(GPIO_PB6);
+	// gpio_output_en(GPIO_PB6);
+	// gpio_function_en(GPIO_PB7);
+	// gpio_output_en(GPIO_PB7);
+
+	// gpio_set_low_level(GPIO_PB4);
+	// gpio_set_low_level(GPIO_PB5);
+	// gpio_set_low_level(GPIO_PB6);
+	// gpio_set_low_level(GPIO_PB7);
+
+	// gpio_toggle(GPIO_PB4);
+	// //delay_us(40);
+	// gpio_toggle(GPIO_PB4);
+
+
+	// gpio_toggle(GPIO_PB5);
+	// // gpio_toggle(GPIO_PB7);
+	// //delay_us(60);
+	// gpio_toggle(GPIO_PB5);
+	// gpio_toggle(GPIO_PB7);
 }
 
 /**

@@ -12,7 +12,8 @@
 #include <zephyr/sys_clock.h>
 #include <zephyr/spinlock.h>
 #include <zephyr/irq.h>
-
+#include "gpio.h"
+#include "gpio_reg.h"
 /* andestech,machine-timer */
 #if DT_HAS_COMPAT_STATUS_OKAY(andestech_machine_timer)
 #define DT_DRV_COMPAT andestech_machine_timer
@@ -88,6 +89,9 @@ static uint32_t last_elapsed;
 const int32_t z_sys_timer_irq_for_test = TIMER_IRQN;
 #endif
 
+// extern  int *Debug_Ptr[32];
+// extern   int Debug_Widx,Debug_Ridx,Debug_Idx;
+
 static uintptr_t get_hart_mtimecmp(void)
 {
 	return MTIMECMP_REG + (arch_proc_id() * 8);
@@ -141,7 +145,7 @@ static uint64_t mtime(void)
 static void timer_isr(const void *arg)
 {
 	ARG_UNUSED(arg);
-
+	// gpio_toggle(GPIO_PB4);
 	k_spinlock_key_t key = k_spin_lock(&lock);
 
 	uint64_t now = mtime();

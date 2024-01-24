@@ -272,7 +272,8 @@ _MULTI_ADDRESS_BEGIN:
 	sw      t2, 0x790(t0)           #/ g_pm_mspi_cfg->0xa3ffff20
 #endif /* flash wakeup chip dependent */
 
-#ifdef CONFIG_BOARD_TLSR9X_NON_RETENTION_RAM_CODE
+/*
+#ifdef 0 CONFIG_BOARD_TLSR9X_NON_RETENTION_RAM_CODE
 _IRAMCODE_INIT:
 	la     t1, _RAMCODE_LMA_START
 	la     t2, _RAMCODE_VMA_START
@@ -284,7 +285,9 @@ _IRAMCODE_INIT_BEGIN:
 	addi   t1, t1, 4
 	addi   t2, t2, 4
 	j      _IRAMCODE_INIT_BEGIN
-#endif /* CONFIG_BOARD_TLSR9X_NON_RETENTION_RAM_CODE */
+#endif */ /* CONFIG_BOARD_TLSR9X_NON_RETENTION_RAM_CODE */
+
+
 
 _RESTORE:
 	j      tl_context_restore

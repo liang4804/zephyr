@@ -13,11 +13,13 @@ static struct k_work_q bt_long_wq;
 
 int bt_long_wq_schedule(struct k_work_delayable *dwork, k_timeout_t timeout)
 {
+//	printk("bt_long_wq_schedule %d",timeout);
 	return k_work_schedule_for_queue(&bt_long_wq, dwork, timeout);
 }
 
 int bt_long_wq_reschedule(struct k_work_delayable *dwork, k_timeout_t timeout)
 {
+//	printk("bt_long_wq_reschedule %d",timeout);
 	return k_work_reschedule_for_queue(&bt_long_wq, dwork, timeout);
 }
 

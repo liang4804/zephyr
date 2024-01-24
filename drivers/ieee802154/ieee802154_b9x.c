@@ -8,11 +8,13 @@
 
 #include "rf.h"
 #include "stimer.h"
+#include "gpio.h"
+#include "gpio_reg.h"
 #include "b9x_rf_power.h"
 
 #define LOG_MODULE_NAME ieee802154_b9x
 #if defined(CONFIG_IEEE802154_DRIVER_LOG_LEVEL)
-#define LOG_LEVEL CONFIG_IEEE802154_DRIVER_LOG_LEVEL
+#define LOG_LEVEL 3//CONFIG_IEEE802154_DRIVER_LOG_LEVEL
 #else
 #define LOG_LEVEL LOG_LEVEL_NONE
 #endif
@@ -590,6 +592,7 @@ ALWAYS_INLINE b9x_send_ack(const struct device *dev, struct ieee802154_frame *fr
 	if (b9x_ieee802154_frame_build(frame, ack_buf, sizeof(ack_buf), &ack_len)) {
 		b9x->ack_sending = true;
 		k_sem_reset(&b9x->tx_wait);
+		rf_set_tx_rx_off();
 		rf_set_txmode();
 #ifdef CONFIG_IEEE802154_2015
 		if (frame->sec_header) {
@@ -623,7 +626,7 @@ static void ALWAYS_INLINE b9x_rf_rx_isr(const struct device *dev)
 	struct b9x_data *b9x = dev->data;
 	int status = -EINVAL;
 	struct net_pkt *pkt = NULL;
-
+	char fp = 0;
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
 	uint64_t rx_time = k_ticks_to_us_near64(k_uptime_ticks());
 	uint32_t delta_time = (stimer_get_tick() - ZB_RADIO_TIMESTAMP_GET(b9x->rx_buffer)) /
@@ -669,6 +672,7 @@ static void ALWAYS_INLINE b9x_rf_rx_isr(const struct device *dev)
 			length -= B9X_FCS_LENGTH;
 			b9x_ieee802154_frame_parse(payload, length, &frame);
 		}
+		fp = frame.general.fp_bit;
 		if (!frame.general.valid) {
 			LOG_ERR("Invalid frame\n");
 			if (b9x->event_handler) {
@@ -801,7 +805,11 @@ static void ALWAYS_INLINE b9x_rf_rx_isr(const struct device *dev)
 	if (status < 0 && pkt != NULL) {
 		net_pkt_unref(pkt);
 	}
+	if (fp)
 	dma_chn_en(DMA1);
+	else
+	rf_set_tx_rx_off();
+	// gpio_toggle(GPIO_PB5);
 }
 
 /* TX IRQ handler */
@@ -820,6 +828,7 @@ static ALWAYS_INLINE void b9x_rf_tx_isr(const struct device *dev)
 
 	/* set to rx mode */
 	rf_set_rxmode();
+
 }
 
 /* IRQ handler */
@@ -931,8 +940,9 @@ static int b9x_set_channel(const struct device *dev, uint16_t channel)
 		b9x->current_channel = channel;
 		if (b9x->is_started) {
 			rf_set_chn(B9X_LOGIC_CHANNEL_TO_PHYSICAL(channel));
-			rf_set_txmode();
-			rf_set_rxmode();
+			rf_set_tx_rx_off();
+			// rf_set_txmode();
+			// rf_set_rxmode();
 		}
 	}
 
@@ -987,7 +997,7 @@ static int b9x_set_txpower(const struct device *dev, int16_t dbm)
 static int b9x_start(const struct device *dev)
 {
 	struct b9x_data *b9x = dev->data;
-
+	gpio_toggle(GPIO_PB5);
 	b9x_disable_pm(dev);
 	/* check if RF is already started */
 	if (!b9x->is_started) {
@@ -1009,8 +1019,9 @@ static int b9x_start(const struct device *dev)
 		}
 		rf_set_irq_mask(FLD_RF_IRQ_RX | FLD_RF_IRQ_TX);
 		riscv_plic_irq_enable(DT_INST_IRQN(0) - CONFIG_2ND_LVL_ISR_TBL_OFFSET);
-		rf_set_txmode();
-		rf_set_rxmode();
+		// rf_set_txmode();
+		// rf_set_rxmode();
+		rf_set_tx_rx_off();
 		b9x->is_started = true;
 	}
 
@@ -1068,6 +1079,7 @@ static int b9x_tx(const struct device *dev,
 	if (b9x->ack_sending) {
 		if (k_sem_take(&b9x->tx_wait, K_MSEC(B9X_TX_WAIT_TIME_MS)) != 0) {
 			b9x->ack_sending = false;
+			rf_set_tx_rx_off();
 			rf_set_rxmode();
 		}
 	}
@@ -1236,6 +1248,7 @@ static int b9x_tx(const struct device *dev,
 	k_sem_reset(&b9x->ack_wait);
 
 	/* start transmission */
+	rf_set_tx_rx_off();
 	rf_set_txmode();
 
 #if defined(CONFIG_NET_PKT_TIMESTAMP) && defined(CONFIG_NET_PKT_TXTIME)
@@ -1247,16 +1260,18 @@ static int b9x_tx(const struct device *dev,
 		delay_us(CONFIG_IEEE802154_B9X_SET_TXRX_DELAY_US);
 	}
 	rf_tx_pkt(b9x->tx_buffer);
+	// gpio_toggle(GPIO_PB5);
 	if (b9x->event_handler) {
 		b9x->event_handler(dev, IEEE802154_EVENT_TX_STARTED, (void *)frag);
 	}
 
 	/* wait for tx done */
 	if (k_sem_take(&b9x->tx_wait, K_MSEC(B9X_TX_WAIT_TIME_MS)) != 0) {
+		rf_set_tx_rx_off();
 		rf_set_rxmode();
 		status = -EIO;
 	}
-
+	//gpio_toggle(GPIO_PB5);
 	/* wait for ACK if requested */
 	if (!status && (frag->data[0] & IEEE802154_FRAME_FCF_ACK_REQ_MASK) ==
 		IEEE802154_FRAME_FCF_ACK_REQ_ON) {
@@ -1265,6 +1280,7 @@ static int b9x_tx(const struct device *dev,
 		if (k_sem_take(&b9x->ack_wait, K_MSEC(B9X_ACK_WAIT_TIME_MS)) != 0) {
 			status = -ENOMSG;
 		}
+		//gpio_toggle(GPIO_PB5);
 		b9x->ack_handler_en = false;
 	}
 #ifdef CONFIG_IEEE802154_2015

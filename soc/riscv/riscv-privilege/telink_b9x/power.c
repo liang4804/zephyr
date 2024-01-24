@@ -9,8 +9,9 @@
 #include <stimer.h>
 #include <b9x_sleep.h>
 #include <zephyr/kernel.h>
-
-LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
+#include "gpio.h"
+#include "gpio_reg.h"
+LOG_MODULE_DECLARE(soc, 2);//CONFIG_SOC_LOG_LEVEL
 
 #define DT_DRV_COMPAT telink_machine_timer
 
@@ -27,6 +28,8 @@ LOG_MODULE_DECLARE(soc, CONFIG_SOC_LOG_LEVEL);
 #else
 #define SYSTICKS_MAX_SLEEP 0xe0000000
 #endif /* CONFIG_BT */
+
+
 
 /**
  * @brief This define converts Machine Timer ticks to B9x System Timer ticks.
@@ -83,14 +86,18 @@ static void set_mtime(uint64_t time)
 
 #if defined(CONFIG_BOARD_TLSR9518ADK80D_RETENTION) || defined(CONFIG_BOARD_TLSR9528A_RETENTION)
 volatile bool b9x_deep_sleep_retention;
+volatile bool b9x_deep_sleep_flag=false;
 #endif
-
+// extern  int *Debug_Ptr[32];
+// extern   int Debug_Widx,Debug_Ridx,Debug_Idx;
 /**
  * @brief PM state set API implementation.
  */
 __weak void pm_state_set(enum pm_state state, uint8_t substate_id)
 {
 	ARG_UNUSED(substate_id);
+
+
 
 	uint32_t tl_sleep_tick = stimer_get_tick();
 	uint64_t current_time = get_mtime();
@@ -108,10 +115,17 @@ __weak void pm_state_set(enum pm_state state, uint8_t substate_id)
 		if (stimer_sleep_ticks > SYSTICKS_MAX_SLEEP) {
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
 		}
+		// Debug_Idx++;
 		if (b9x_suspend(tl_sleep_tick + stimer_sleep_ticks)) {
 			current_time +=
 				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
 			set_mtime(current_time);
+			// gpio_toggle(GPIO_PB5);
+			// gpio_toggle(GPIO_PB7);
+			//delay_us(80);
+			// gpio_toggle(GPIO_PB5);
+			// gpio_toggle(GPIO_PB7);
+
 		}
 		break;
 #if defined(CONFIG_BOARD_TLSR9518ADK80D_RETENTION) || defined(CONFIG_BOARD_TLSR9528A_RETENTION)
@@ -119,12 +133,20 @@ __weak void pm_state_set(enum pm_state state, uint8_t substate_id)
 		if (stimer_sleep_ticks > SYSTICKS_MAX_SLEEP) {
 			stimer_sleep_ticks = SYSTICKS_MAX_SLEEP;
 		}
+		// LOG_WRN("pm %x %x %x  %llx  %llx",Debug_Widx,Debug_Ridx,Debug_Idx,(wakeup_time-current_time),stimer_sleep_ticks);
+		// while(Debug_Widx!=Debug_Ridx)
+		// {
+		// LOG_WRN("idl %x",Debug_Ptr[Debug_Ridx%32]);
+		// Debug_Ridx++;
+		// }
+		// Debug_Idx=0;
 		if (b9x_deep_sleep(tl_sleep_tick + stimer_sleep_ticks)) {
 			current_time +=
 				systicks_to_mticks(stimer_get_tick() - tl_sleep_tick);
 			set_mtime_compare(wakeup_time);
 			set_mtime(current_time);
 			b9x_deep_sleep_retention = true;
+			b9x_deep_sleep_flag = true;
 		}
 		break;
 #endif
